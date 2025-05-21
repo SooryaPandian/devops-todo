@@ -7,7 +7,7 @@ require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 const PORT = 3000;
-// added a comment
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
