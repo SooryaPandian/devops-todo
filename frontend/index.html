@@ -1,42 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>To-Do List</title> <!-- fixed typo: Todo -> To-Do -->
+  <meta charset="UTF-8" />
+  <title>Advanced To-Do List</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #4a90e2;
+    }
+
+    form {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      display: grid;
+      gap: 1rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    input, textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 0.7rem;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    li {
+      background: white;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-left: 5px solid #4a90e2;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .todo-actions button {
+      background: #ddd;
+      color: #333;
+    }
+
+    .todo-actions button.done {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .todo-actions button.delete {
+      background: #e74c3c;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-  <h1>To-Do List</h1> <!-- fixed typo: Todo -> To-Do -->
-  <input type="text" id="newTodo" placeholder="New Task"> <!-- fixed typo: task -> Task -->
-  <button onclick="addTodo()">Add</button>
+  <h1>Advanced To-Do List</h1>
+
+  <form id="todoForm">
+    <input type="text" id="title" placeholder="Title" required />
+    <textarea id="description" placeholder="Description"></textarea>
+    <input type="date" id="dueDate" />
+    <input type="url" id="link" placeholder="Reference Link (optional)" />
+    <button type="submit">Add Task</button>
+  </form>
+
   <ul id="todoList"></ul>
 
   <script>
+    const API_URL = 'http://localhost:3000/todos';
+
     async function fetchTodos() {
-      const res = await fetch('http://localhost:3000/todos');
+      const res = await fetch(API_URL);
       const todos = await res.json();
       const list = document.getElementById('todoList');
       list.innerHTML = '';
       todos.forEach(todo => {
         const li = document.createElement('li');
-        li.textContent = todo.title + (todo.completed ? " ✅" : "");
-        li.onclick = () => toggleTodo(todo.id, !todo.completed);
+        li.className = todo.completed ? 'completed' : '';
+        li.innerHTML = `
+          <strong>${todo.title}</strong><br/>
+          ${todo.description ? `<p>${todo.description}</p>` : ''}
+          ${todo.dueDate ? `<p>📅 Due: ${new Date(todo.dueDate).toLocaleDateString()}</p>` : ''}
+          ${todo.link ? `<a href="${todo.link}" target="_blank">🔗 Link</a><br/>` : ''}
+          <div class="todo-actions">
+            <button class="done" onclick="toggleComplete('${todo._id}', ${!todo.completed})">${todo.completed ? 'Undo' : 'Done'}</button>
+            <button class="delete" onclick="deleteTodo('${todo._id}')">Delete</button>
+          </div>
+        `;
         list.appendChild(li);
       });
     }
 
-    async function addTodo() {
-      const title = document.getElementById('newTodo').value;
-      await fetch('http://localhost:3000/todos', {
+    async function addTodo(e) {
+      e.preventDefault();
+      const todo = {
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        dueDate: document.getElementById('dueDate').value,
+        link: document.getElementById('link').value
+      };
+      await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
+        body: JSON.stringify(todo)
       });
-      document.getElementById('newTodo').value = '';
+      document.getElementById('todoForm').reset();
       fetchTodos();
     }
 
-    async function toggleTodo(id, completed) {
-      await fetch(`http://localhost:3000/todos/${id}`, {
+    async function toggleComplete(id, completed) {
+      await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed })
@@ -44,6 +153,12 @@
       fetchTodos();
     }
 
+    async function deleteTodo(id) {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      fetchTodos();
+    }
+
+    document.getElementById('todoForm').addEventListener('submit', addTodo);
     fetchTodos();
   </script>
 </body>

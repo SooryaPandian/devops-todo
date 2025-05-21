@@ -1,44 +1,59 @@
 // server.js
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('../frontend'));
 
-let todos = [];
-let idCounter = 1;
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/advanced_todo', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-app.get('/todos', (req, res) => {
+// Define Todo Schema
+const todoSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  dueDate: Date,
+  link: String,
+  completed: { type: Boolean, default: false },
+});
+
+const Todo = mongoose.model('Todo', todoSchema);
+
+// API routes
+app.get('/todos', async (req, res) => {
+  const todos = await Todo.find();
   res.json(todos);
 });
 
-app.post('/todos', (req, res) => {
-  const { title } = req.body;
-  const newTodo = { id: idCounter++, title, completed: false };
-  todos.push(newTodo);
+app.post('/todos', async (req, res) => {
+  const newTodo = new Todo(req.body);
+  await newTodo.save();
   res.status(201).json(newTodo);
 });
 
-app.put('/todos/:id', (req, res) => {
-  const { id } = req.params;
-  const { completed } = req.body;
-  const todo = todos.find(t => t.id == id);
-  if (todo) {
-    todo.completed = completed;
-    res.json(todo);
-  } else {
-    res.status(404).json({ message: 'Todo not found' });
-  }
+app.put('/todos/:id', async (req, res) => {
+  const updated = await Todo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(updated);
 });
 
-app.delete('/todos/:id', (req, res) => {
-  const { id } = req.params;
-  todos = todos.filter(t => t.id != id);
+app.delete('/todos/:id', async (req, res) => {
+  await Todo.findByIdAndDelete(req.params.id);
   res.status(204).send();
 });
 
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: path.resolve(__dirname, '../frontend') });
+});
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });
