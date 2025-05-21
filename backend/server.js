@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.static('../frontend'));
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URL, {
+mongoose.connect("mongodb+srv://smartindiahackathon24:soorya@cluster0.aktmx.mongodb.net/todo", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
