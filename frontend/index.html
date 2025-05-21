@@ -1,11 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Todo List</title>
 </head>
 <body>
-    
+  <h1>Todo List</h1>
+  <input type="text" id="newTodo" placeholder="New task">
+  <button onclick="addTodo()">Add</button>
+  <ul id="todoList"></ul>
+
+  <script>
+    async function fetchTodos() {
+      const res = await fetch('http://localhost:3000/todos');
+      const todos = await res.json();
+      const list = document.getElementById('todoList');
+      list.innerHTML = '';
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.textContent = todo.title + (todo.completed ? " ✅" : "");
+        li.onclick = () => toggleTodo(todo.id, !todo.completed);
+        list.appendChild(li);
+      });
+    }
+
+    async function addTodo() {
+      const title = document.getElementById('newTodo').value;
+      await fetch('http://localhost:3000/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      document.getElementById('newTodo').value = '';
+      fetchTodos();
+    }
+
+    async function toggleTodo(id, completed) {
+      await fetch(`http://localhost:3000/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      fetchTodos();
+    }
+
+    fetchTodos();
+  </script>
 </body>
 </html>
