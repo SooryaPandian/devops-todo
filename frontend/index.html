@@ -92,6 +92,8 @@
 <body>
   <h1>Devops Advanced To-Do List</h1>
 
+  <input type="text" id="search" placeholder="Search tasks..." style="margin-bottom:1rem;max-width:500px;width:100%;padding:0.5rem;border-radius:5px;border:1px solid #ccc;" />
+
   <form id="todoForm">
     <input type="text" id="title" placeholder="Title" required />
     <textarea id="description" placeholder="Description"></textarea>
@@ -104,27 +106,38 @@
 
   <script>
     const API_URL = 'http://localhost:3000/todos';
+    let allTodos = [];
 
     async function fetchTodos() {
       const res = await fetch(API_URL);
-      const todos = await res.json();
+      allTodos = await res.json();
+      renderTodos();
+    }
+
+    function renderTodos() {
       const list = document.getElementById('todoList');
+      const search = document.getElementById('search').value.trim().toLowerCase();
       list.innerHTML = '';
-      todos.forEach(todo => {
-        const li = document.createElement('li');
-        li.className = todo.completed ? 'completed' : '';
-        li.innerHTML = `
-          <strong>${todo.title}</strong><br/>
-          ${todo.description ? `<p>${todo.description}</p>` : ''}
-          ${todo.dueDate ? `<p>📅 Due: ${new Date(todo.dueDate).toLocaleDateString()}</p>` : ''}
-          ${todo.link ? `<a href="${todo.link}" target="_blank">🔗 Link</a><br/>` : ''}
-          <div class="todo-actions">
-            <button class="done" onclick="toggleComplete('${todo._id}', ${!todo.completed})">${todo.completed ? 'Undo' : 'Done'}</button>
-            <button class="delete" onclick="deleteTodo('${todo._id}')">Delete</button>
-          </div>
-        `;
-        list.appendChild(li);
-      });
+      allTodos
+        .filter(todo =>
+          todo.title.toLowerCase().includes(search) ||
+          (todo.description && todo.description.toLowerCase().includes(search))
+        )
+        .forEach(todo => {
+          const li = document.createElement('li');
+          li.className = todo.completed ? 'completed' : '';
+          li.innerHTML = `
+            <strong>${todo.title}</strong><br/>
+            ${todo.description ? `<p>${todo.description}</p>` : ''}
+            ${todo.dueDate ? `<p>📅 Due: ${new Date(todo.dueDate).toLocaleDateString()}</p>` : ''}
+            ${todo.link ? `<a href="${todo.link}" target="_blank">🔗 Link</a><br/>` : ''}
+            <div class="todo-actions">
+              <button class="done" onclick="toggleComplete('${todo._id}', ${!todo.completed})">${todo.completed ? 'Undo' : 'Done'}</button>
+              <button class="delete" onclick="deleteTodo('${todo._id}')">Delete</button>
+            </div>
+          `;
+          list.appendChild(li);
+        });
     }
 
     async function addTodo(e) {
@@ -159,6 +172,7 @@
     }
 
     document.getElementById('todoForm').addEventListener('submit', addTodo);
+    document.getElementById('search').addEventListener('input', renderTodos);
     fetchTodos();
   </script>
 </body>
