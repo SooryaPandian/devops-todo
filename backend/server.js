@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 const PORT = 3000;
@@ -12,7 +13,7 @@ app.use(express.json());
 app.use(express.static('../frontend'));
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/advanced_todo', {
+mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
